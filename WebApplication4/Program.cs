@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace WebApplication4
 {
     public class Program
@@ -38,10 +40,11 @@ namespace WebApplication4
                     a.Close();
                 }
 
+                var path = @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\Resources\"
+                        + @$"{_pictures[query.Query ?? "null"]}";
+
                 using var binaryReader = new BinaryReader(
-                    File.Open(
-                        @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\Resources\
-                        {_pictures[query.Query ?? "null"]}", FileMode.Open));
+                    File.Open(path, FileMode.Open));
 
                 await binaryReader.BaseStream.CopyToAsync(context.Response.Body);
             });
@@ -53,6 +56,7 @@ namespace WebApplication4
     [Serializable]
     internal class QueryString
     {
+        [JsonPropertyName("QueryString")]
         public string? Query { get; set; }
     }
 }
