@@ -33,20 +33,19 @@ namespace WebApplication4
 
                 if (!_pictures.ContainsKey(query.Query))
                 {
-                    var a = new BinaryWriter(context.Response.Body);
-
-                    a.Write("Invalid request");
-
-                    a.Close();
+                    context.Response.StatusCode = 404;
+                    return;
                 }
+                   
+                    
 
                 var path = @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\Resources\"
                         + @$"{_pictures[query.Query ?? "null"]}";
 
-                using var binaryReader = new BinaryReader(
-                    File.Open(path, FileMode.Open));
+                //using var binaryReader = new BinaryReader(
+                //    File.Open(path, FileMode.Open));
 
-                await binaryReader.BaseStream.CopyToAsync(context.Response.Body);
+                await context.Response.SendFileAsync(path);
             });
 
             app.Run();

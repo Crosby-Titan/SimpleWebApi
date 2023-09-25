@@ -14,6 +14,6 @@ async function Click() {
     );
     const file = await request.blob();
 
-    img.src = URL.createObjectURL(file);
+    document.getElementById("testP").innerText = file.type;
 
 }
