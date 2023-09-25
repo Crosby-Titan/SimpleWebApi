@@ -1,0 +1,23 @@
+﻿.headPage h1{
+    font-family:'Yu Gothic';
+    font-size:50px;
+    color:bisque;
+    text-align:center;
+}
+
+.headPage {
+    height: 100px;
+    width: 600px;
+    margin-left: auto;
+    margin-right:auto;
+}
+
+.headPage .searchElement{
+    border-radius:10%;
+    width:fit-content;
+    height:fit-content;
+    margin-left: auto;
+    margin-right:auto;
+}
+
+
