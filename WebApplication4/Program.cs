@@ -5,21 +5,15 @@ namespace WebApplication4
         private static IDictionary<string, string> _pictures { get; set; }  
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = "files" });
             var app = builder.Build();
+
+            app.UseStaticFiles();
 
             _pictures = new Dictionary<string, string>
             {
                 { "samurai", @"b79f9664257bf2836f7e7ca896f92244.jpg" }
             };
-
-            app.MapGet("/", async (context) => 
-            {
-                context.Response.ContentType = "text/html; charset=utf-8;";
-
-                await context.Response.SendFileAsync(@"../HTML/index.html");
-            
-            });
 
             app.MapGet("/search",async (context) =>
             {
