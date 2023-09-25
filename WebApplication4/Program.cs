@@ -2,7 +2,7 @@ namespace WebApplication4
 {
     public class Program
     {
-        private static IDictionary<string, string> _pictures { get; set; }  
+        private static IDictionary<string, string> _pictures { get; set; }
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = "files" });
@@ -15,7 +15,15 @@ namespace WebApplication4
                 { "samurai", @"b79f9664257bf2836f7e7ca896f92244.jpg" }
             };
 
-            app.MapGet("/search",async (context) =>
+            app.MapGet("/",async (context) =>
+            {
+                context.Response.ContentType = "text/html; charset=utf-8;";
+
+                await context.Response.SendFileAsync(@"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\files\HTML\index.html");
+                
+            });
+
+            app.MapPost("/search", async (context) =>
             {
                 context.Request.ContentType = "application/json";
 
@@ -33,7 +41,7 @@ namespace WebApplication4
                 using var binaryReader = new BinaryReader(
                     File.Open(
                         @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\Resources\
-                        {_pictures[query.Query ?? "null"]}",FileMode.Open));
+                        {_pictures[query.Query ?? "null"]}", FileMode.Open));
 
                 await binaryReader.BaseStream.CopyToAsync(context.Response.Body);
             });

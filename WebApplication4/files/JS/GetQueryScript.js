@@ -1,28 +1,19 @@
-﻿const { get } = require("http");
-
-document.getElementById("sendQuery").addEventListener("click", Click);
+﻿document.getElementById("sendQuery").addEventListener("click", Click);
 var searchElement = document.getElementById("queryString");
 var img = document.querySelector("img");
 
 async function Click() {
-    const request = await fetch("https://localhost:7135/",
+    const request = await fetch("https://localhost:7135/search",
         {
-            method: "GET",
+            method: "POST",
             headers: { "Accept": "application/json", "Content-Type": "application/json" },
             body: JSON.stringify({
                 QueryString: searchElement.value
             })
         }
     );
+    const file = await request.blob();
 
-    while (true) {
-        const file = await request.blob();
+    img.src = URL.createObjectURL(file);
 
-        if (file.size <= 0)
-            break;
-
-        img.src = URL.createObjectURL(file);
-
-    }
-    
 }
