@@ -1,5 +1,6 @@
 ﻿document.getElementById("sendQuery").addEventListener("click", Click);
 var searchElement = document.getElementById("queryString");
+var img = document.createElement("img");
 
 async function Click() {
     const request = await fetch("https://localhost:7135/search",
@@ -12,6 +13,12 @@ async function Click() {
         }
     );
 
-    document.getElementById("testP").innerText = request.status();
 
+    const file = await request.json();
+
+    img.src = "data:image/png;base64," + String(file.imgStr);
+
+    document.body.appendChild(img);
+
+    document.getElementById("testP").innerText = String(request.status);
 }

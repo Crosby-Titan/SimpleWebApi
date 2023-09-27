@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace WebApplication4
@@ -14,7 +16,7 @@ namespace WebApplication4
 
             _pictures = new Dictionary<string, string>
             {
-                { "samurai", @"b79f9664257bf2836f7e7ca896f92244.jpg" }
+                { "samurai", "samurai.jpg" }
             };
 
             app.MapGet("/",async (context) =>
@@ -37,15 +39,31 @@ namespace WebApplication4
                     return;
                 }
                    
-                    
-
-                var path = @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\Resources\"
+                var path = @$"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\files\Resources\Images\"
                         + @$"{_pictures[query.Query ?? "null"]}";
 
-                //using var binaryReader = new BinaryReader(
-                //    File.Open(path, FileMode.Open));
+                FileInfo info = new FileInfo(path);
 
-                await context.Response.SendFileAsync(path);
+                Stream? stream = null;
+
+                if (info.Exists)
+                    stream = info.OpenRead();
+                else
+                {
+                    context.Response.StatusCode = 404;
+                    return;
+                }
+
+                byte[] bytes = new byte[info.Length];
+
+                stream.Read(bytes,0,bytes.Length);
+
+                stream.Close();
+
+                context.Response.ContentType = "application/json; charset=utf-8;";
+
+                await context.Response.WriteAsJsonAsync(new { imgStr = Convert.ToBase64String(bytes) });
+                
             });
 
             app.Run();
@@ -57,5 +75,12 @@ namespace WebApplication4
     {
         [JsonPropertyName("QueryString")]
         public string? Query { get; set; }
+    }
+
+    [Serializable]
+    internal class EncodedImages
+    {
+        [JsonPropertyName("ImagesArray")]
+        public List<string>? Images { get; set; }
     }
 }
