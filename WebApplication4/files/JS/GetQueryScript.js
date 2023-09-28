@@ -1,6 +1,5 @@
 ﻿document.getElementById("sendQuery").addEventListener("click", Click);
 var searchElement = document.getElementById("queryString");
-var img = document.createElement("img");
 
 async function Click() {
     const request = await fetch("https://localhost:7135/search",
@@ -15,18 +14,29 @@ async function Click() {
 
     if (request.status == 404) {
         const errorResponse = await request.json();
-        document.getElementById("testP").innerText = String(errorResponse.message);
+        const errorMessage = Array(errorResponse.message)[0];
+        document.getElementById("testP").innerText = String(errorMessage);
         return;
     }
 
-    const file = await request.json();
+    const response = await request.json();
+    const message = Array(response.message);
 
-    img.src = "data:image/png;base64," + String(file.message);
+    for (let i = 0; i < message.length; i++) {
+        const element = message[i];
 
-    img.width = 600;
-    img.height = 400;
+        if (element == null || element == "END")
+            break;
 
-    document.body.getElementsByClassName("content")[0].appendChild(img);
+        let img = document.createElement("img");
+        img.src = "data:image/png;base64," + String(element);
+
+        img.width = 600;
+        img.height = 400;
+
+        document.body.getElementsByClassName("content")[0].appendChild(img);
+    }
 
     document.getElementById("testP").innerText = String(request.status);
+
 }

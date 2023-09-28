@@ -35,7 +35,7 @@ namespace WebApplication4
                 if (String.IsNullOrEmpty(query.Query))
                 {
                     context.Response.StatusCode = 404;
-                    await context.Response.WriteAsJsonAsync(new { message = "Current query returned empty result." });
+                    await context.Response.WriteAsJsonAsync(new { message = new[] { "Current query returned empty result." } });
                 }
 
                 await SendPictureAsync(context, query?.Query);
@@ -53,36 +53,50 @@ namespace WebApplication4
             };
 
             var img = new Image(Path.Combine(_defaultImagePath, "samurai.jpg"), "samurai");
+            var img2 = new Image(Path.Combine(_defaultImagePath, "samurai2.jpg"), "samurai");
 
             _pictures["samurai"].AddLast(img);
+            _pictures["samurai"].AddLast(img2);
         }
 
         private static async Task SendPictureAsync(HttpContext context, string? query)
         {
+
             context.Response.ContentType = "application/json; charset=utf-8;";
 
-            await foreach (var picCollection in GetImages(query, _pictures))
-            {
-                if(picCollection == null)
-                    continue;
+            var imgCollection = new List<string?>();
 
-                foreach (var pic in picCollection)
+            await Task.Run(() => 
+            {
+                foreach (var picCollection in GetImages(query, _pictures))
                 {
-                    await context.Response.WriteAsJsonAsync(new { message = pic.GetEncodedUrl });
+                    if (picCollection == null)
+                        continue;
+
+                    foreach (var pic in picCollection)
+                    {
+                        imgCollection.Add(pic.GetEncodedUrl);
+                    }
                 }
-            }
+            });
+
+            imgCollection.Add("END");
+
+            await context.Response.WriteAsJsonAsync(new { message = imgCollection.ToArray() });
+
         }
 
-        private static async IAsyncEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>> pictures)
+        private static IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>> pictures)
         {
             foreach (var picture in pictures)
             {
                 if (picture.Key == query.ToLower())
                 {
-                    await Task.Delay(0);
                     yield return picture.Value;
                 }
             }
+
+            yield break;
         }
     }
 
