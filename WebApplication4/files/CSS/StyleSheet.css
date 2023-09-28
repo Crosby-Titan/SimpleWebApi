@@ -20,4 +20,9 @@
     margin-right:auto;
 }
 
+.content{
+    width: 400px;
+    height: 400px;
+    justify-content:space-between;
+}
 

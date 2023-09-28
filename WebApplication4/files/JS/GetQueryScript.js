@@ -13,12 +13,20 @@ async function Click() {
         }
     );
 
+    if (request.status == 404) {
+        const errorResponse = await request.json();
+        document.getElementById("testP").innerText = String(errorResponse.message);
+        return;
+    }
 
     const file = await request.json();
 
-    img.src = "data:image/png;base64," + String(file.imgStr);
+    img.src = "data:image/png;base64," + String(file.message);
 
-    document.body.appendChild(img);
+    img.width = 600;
+    img.height = 400;
+
+    document.body.getElementsByClassName("content")[0].appendChild(img);
 
     document.getElementById("testP").innerText = String(request.status);
 }
