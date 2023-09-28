@@ -21,8 +21,11 @@
 }
 
 .content{
-    width: 400px;
-    height: 400px;
-    justify-content:space-between;
+    height:auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    margin: 10px;
 }
 

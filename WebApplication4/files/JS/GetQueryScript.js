@@ -20,15 +20,18 @@ async function Click() {
     }
 
     const response = await request.json();
-    const message = Array(response.message);
+    const message = response.message;
 
     for (let i = 0; i < message.length; i++) {
-        const element = message[i];
+        const element = message.at(i);
 
         if (element == null || element == "END")
             break;
 
         let img = document.createElement("img");
+
+        img.style.display = "flex";
+
         img.src = "data:image/png;base64," + String(element);
 
         img.width = 600;
