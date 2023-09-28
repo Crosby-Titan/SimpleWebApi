@@ -36,6 +36,7 @@ namespace WebApplication4
                 {
                     context.Response.StatusCode = 404;
                     await context.Response.WriteAsJsonAsync(new { message = new[] { "Current query returned empty result." } });
+                    return;
                 }
 
                 await SendPictureAsync(context, query?.Query);

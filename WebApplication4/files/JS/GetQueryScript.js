@@ -12,12 +12,8 @@ async function Click() {
         }
     );
 
-    if (request.status == 404) {
-        const errorResponse = await request.json();
-        const errorMessage = Array(errorResponse.message)[0];
-        document.getElementById("testP").innerText = String(errorMessage);
+    if(await CheckResponseStatus(request) == 404)
         return;
-    }
 
     const response = await request.json();
     const message = response.message;
@@ -42,4 +38,19 @@ async function Click() {
 
     document.getElementById("testP").innerText = String(request.status);
 
+}
+
+async function CheckResponseStatus(response)
+{
+    if (response.status != 404){
+        return 200;
+    }
+    
+    const errorResponse = await response.json();
+    const errorMessage = errorResponse.message[0];
+    document.getElementById("testP").innerText = String(errorMessage);
+    response.status = 200;
+
+    return 404;
+    
 }
