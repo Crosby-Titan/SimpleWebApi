@@ -1,5 +1,6 @@
 ﻿document.getElementById("sendQuery").addEventListener("click", Click);
 var searchElement = document.getElementById("queryString");
+var htmlContent = document.body.getElementsByClassName("content")[0];
 
 async function Click() {
     const request = await fetch("https://localhost:7135/search",
@@ -11,6 +12,15 @@ async function Click() {
             })
         }
     );
+
+    if(htmlContent == "undefined")
+        return;
+
+    let childrenToRemove = Array.from(htmlContent.childNodes);
+
+    childrenToRemove.forEach(element => {
+        htmlContent.removeChild(element);
+    });
 
     if(await CheckResponseStatus(request) == 404)
         return;
@@ -27,13 +37,14 @@ async function Click() {
         let img = document.createElement("img");
 
         img.style.display = "flex";
+        img.style.margin = "5px";
 
         img.src = "data:image/png;base64," + String(element);
 
         img.width = 600;
         img.height = 400;
 
-        document.body.getElementsByClassName("content")[0].appendChild(img);
+        htmlContent.appendChild(img);
     }
 
     document.getElementById("testP").innerText = String(request.status);
@@ -50,7 +61,6 @@ async function CheckResponseStatus(response)
     const errorMessage = errorResponse.message[0];
     document.getElementById("testP").innerText = String(errorMessage);
     response.status = 200;
-
     return 404;
     
 }
