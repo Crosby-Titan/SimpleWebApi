@@ -13,14 +13,15 @@ async function Click() {
         }
     );
 
-    if(htmlContent == "undefined")
-        return;
+    if(htmlContent.hasChildNodes)
+    {
+        let childrenToRemove = Array.from(htmlContent.childNodes);
 
-    let childrenToRemove = Array.from(htmlContent.childNodes);
+        childrenToRemove.forEach(element => {
+            htmlContent.removeChild(element);
+        });
 
-    childrenToRemove.forEach(element => {
-        htmlContent.removeChild(element);
-    });
+    }
 
     if(await CheckResponseStatus(request) == 404)
         return;
