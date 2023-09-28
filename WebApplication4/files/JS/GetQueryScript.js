@@ -1,6 +1,5 @@
 ﻿document.getElementById("sendQuery").addEventListener("click", Click);
 var searchElement = document.getElementById("queryString");
-var htmlContent = document.body.getElementsByClassName("content")[0];
 
 async function Click() {
     const request = await fetch("https://localhost:7135/search",
@@ -13,7 +12,9 @@ async function Click() {
         }
     );
 
-    if(htmlContent.hasChildNodes)
+    var htmlContent = Array.from(document.body.getElementsByClassName("content")).at(0);
+
+    if(htmlContent.hasChildNodes())
     {
         let childrenToRemove = Array.from(htmlContent.childNodes);
 

@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace WebApplication4
 {
     public class Program
     {
-        private static IDictionary<string, LinkedList<Image>> _pictures { get; set; }
+        private static IDictionary<string, LinkedList<Image>>? _pictures { get; set; }
         private static readonly string _defaultImagePath = @"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\files\Resources\Images\";
         public static void Main(string[] args)
         {
@@ -32,7 +33,7 @@ namespace WebApplication4
 
                 var query = await context.Request.ReadFromJsonAsync<QueryString>();
 
-                if (String.IsNullOrEmpty(query.Query))
+                if (String.IsNullOrEmpty(query?.Query))
                 {
                     context.Response.StatusCode = 404;
                     await context.Response.WriteAsJsonAsync(new { message = new[] { "Current query returned empty result." } });
@@ -48,16 +49,28 @@ namespace WebApplication4
 
         private static void InitializeComponents()
         {
-            _pictures = new Dictionary<string, LinkedList<Image>>()
+
+            _pictures = new Dictionary<string, LinkedList<Image>>();
+
+            var images = ReadImagesFromDirectory.GetImagesAsync(_defaultImagePath).Result;
+
+            if(images == null)
+                throw new NullReferenceException(nameof(images));
+
+            foreach (var image in images)
             {
-                {"samurai",new LinkedList<Image>()}
-            };
+                string tags = image.Tags.ToString();
 
-            var img = new Image(Path.Combine(_defaultImagePath, "samurai.jpg"), "samurai");
-            var img2 = new Image(Path.Combine(_defaultImagePath, "samurai2.jpg"), "samurai");
-
-            _pictures["samurai"].AddLast(img);
-            _pictures["samurai"].AddLast(img2);
+                if (_pictures.ContainsKey(tags))
+                {
+                    _pictures[tags].AddLast(image);
+                }
+                else
+                {
+                    _pictures.Add(tags, new LinkedList<Image>());
+                    _pictures[tags].AddLast(image);
+                }
+            }
         }
 
         private static async Task SendPictureAsync(HttpContext context, string? query)
@@ -67,7 +80,7 @@ namespace WebApplication4
 
             var imgCollection = new List<string?>();
 
-            await Task.Run(() => 
+            await Task.Run(() =>
             {
                 foreach (var picCollection in GetImages(query, _pictures))
                 {
@@ -87,11 +100,14 @@ namespace WebApplication4
 
         }
 
-        private static IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>> pictures)
+        private static IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>>? pictures)
         {
+            if (pictures == null)
+                yield break;
+
             foreach (var picture in pictures)
             {
-                if (picture.Key == query.ToLower())
+                if (picture.Key.Trim() == query?.ToLower())
                 {
                     yield return picture.Value;
                 }
@@ -111,24 +127,69 @@ namespace WebApplication4
     [Serializable]
     internal class Image
     {
-        private readonly string _imageTags;
         private readonly string _imageUrl;
         private string? _encodedURL;
 
         [JsonPropertyName("ImageURL")]
         public string? GetEncodedUrl { get { if (_encodedURL == null) SetEncodedImageBytes(); return _encodedURL; } }
-        public string GetTags { get { return _imageTags; } }
+        public StringBuilder Tags { get; set; }
         public string GetUrl { get { return _imageUrl; } }
 
-        public Image(string imgSrc, string tags)
+        public Image(string imgSrc)
         {
             _imageUrl = imgSrc;
-            _imageTags = tags;
+            Tags = new StringBuilder();
         }
 
         private void SetEncodedImageBytes()
         {
             _encodedURL = Convert.ToBase64String(File.ReadAllBytes(_imageUrl));
+        }
+    }
+
+    internal static class ReadImagesFromDirectory
+    {
+        public static async Task<LinkedList<Image>?> GetImagesAsync(string directory)
+        {
+            if (!Directory.Exists(directory))
+                return null;
+
+            var images = new LinkedList<Image>();
+
+            await Task.Run(() =>
+            {
+                var files = Directory.GetFiles(directory).Where(
+                (file) =>
+                {
+                    if (file.EndsWith(".png") || file.EndsWith(".jpg") || file.EndsWith(".svg"))
+                        return true;
+
+                    return false;
+                });
+
+
+                Parallel.ForEach(files, (file) =>
+                {
+                    var img = new Image(file);
+
+                    img.Tags.AppendLine(FileExtension.GetShortFileName(file));
+
+                    images.AddLast(img);
+                });
+
+            });
+
+            return images;
+        }
+    }
+
+    internal static class FileExtension
+    {
+        public static string GetShortFileName(string path)
+        {
+            string str = path.Substring(path.LastIndexOf('\\') + 1);
+
+            return str.Remove(str.IndexOf('.'));
         }
     }
 }
