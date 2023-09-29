@@ -9,6 +9,7 @@ namespace WebApplication4
     public class Program
     {
         private static IDictionary<string, LinkedList<Image>>? _pictures { get; set; }
+        private static ImageWorker _worker { get; set; }
         private static readonly string _defaultImagePath = @"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\files\Resources\Images\";
         public static void Main(string[] args)
         {
@@ -40,7 +41,7 @@ namespace WebApplication4
                     return;
                 }
 
-                await SendPictureAsync(context, query?.Query);
+                await _worker.SendPictureAsync(context, query?.Query,_pictures);
 
             });
 
@@ -52,9 +53,11 @@ namespace WebApplication4
 
             _pictures = new Dictionary<string, LinkedList<Image>>();
 
-            var images = ReadImagesFromDirectory.GetImagesAsync(_defaultImagePath).Result;
+            _worker = new ImageWorker();
 
-            if(images == null)
+            var images = _worker.GetImagesAsync(_defaultImagePath).Result;
+
+            if (images == null)
                 throw new NullReferenceException(nameof(images));
 
             foreach (var image in images)
@@ -71,49 +74,6 @@ namespace WebApplication4
                     _pictures[tags].AddLast(image);
                 }
             }
-        }
-
-        private static async Task SendPictureAsync(HttpContext context, string? query)
-        {
-
-            context.Response.ContentType = "application/json; charset=utf-8;";
-
-            var imgCollection = new List<string?>();
-
-            await Task.Run(() =>
-            {
-                foreach (var picCollection in GetImages(query, _pictures))
-                {
-                    if (picCollection == null)
-                        continue;
-
-                    foreach (var pic in picCollection)
-                    {
-                        imgCollection.Add(pic.GetEncodedUrl);
-                    }
-                }
-            });
-
-            imgCollection.Add("END");
-
-            await context.Response.WriteAsJsonAsync(new { message = imgCollection.ToArray() });
-
-        }
-
-        private static IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>>? pictures)
-        {
-            if (pictures == null)
-                yield break;
-
-            foreach (var picture in pictures)
-            {
-                if (picture.Key.Trim() == query?.ToLower())
-                {
-                    yield return picture.Value;
-                }
-            }
-
-            yield break;
         }
     }
 
@@ -149,7 +109,7 @@ namespace WebApplication4
 
     internal static class ReadImagesFromDirectory
     {
-        public static async Task<LinkedList<Image>?> GetImagesAsync(string directory)
+        public static async Task<LinkedList<Image>?> GetImagesAsync(this ImageWorker worker, string directory)
         {
             if (!Directory.Exists(directory))
                 return null;
@@ -170,9 +130,9 @@ namespace WebApplication4
 
                 Parallel.ForEach(files, (file) =>
                 {
-                    var img = new Image(file);
+                    var img = worker.CreateImage(file);
 
-                    img.Tags.AppendLine(FileExtension.GetShortFileName(file));
+                    img.Tags.AppendLine(worker.GetShortFileName(file));
 
                     images.AddLast(img);
                 });
@@ -185,11 +145,65 @@ namespace WebApplication4
 
     internal static class FileExtension
     {
-        public static string GetShortFileName(string path)
+        public static string GetShortFileName(this ImageWorker worker, string path)
         {
             string str = path.Substring(path.LastIndexOf('\\') + 1);
 
             return str.Remove(str.IndexOf('.'));
+        }
+    }
+
+    internal class ImageWorker
+    {
+        public Image? CreateImage(string path)
+        {
+            if (!Directory.Exists(path))
+                return null;
+
+            return new Image(path);
+        }
+
+        public IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>>? pictures)
+        {
+            if (pictures == null)
+                yield break;
+
+            foreach (var picture in pictures)
+            {
+                if (picture.Key.Trim() == query?.ToLower())
+                {
+                    yield return picture.Value;
+                }
+            }
+
+            yield break;
+        }
+
+        public async Task SendPictureAsync(HttpContext context, string? query, IDictionary<string, LinkedList<Image>>? pictures)
+        {
+
+            context.Response.ContentType = "application/json; charset=utf-8;";
+
+            var imgCollection = new List<string?>();
+
+            await Task.Run(() =>
+            {
+                foreach (var picCollection in this.GetImages(query, pictures))
+                {
+                    if (picCollection == null)
+                        continue;
+
+                    foreach (var pic in picCollection)
+                    {
+                        imgCollection.Add(pic.GetEncodedUrl);
+                    }
+                }
+            });
+
+            imgCollection.Add("END");
+
+            await context.Response.WriteAsJsonAsync(new { message = imgCollection.ToArray() });
+
         }
     }
 }
