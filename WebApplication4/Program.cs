@@ -114,8 +114,14 @@ namespace WebApplication4
         }
     }
 
-    internal static class ReadImagesFromDirectory
+    internal static class ImageWorkerExtension
     {
+        public static string GetShortFileName(this ImageWorker worker, string path)
+        {
+            string str = path.Substring(path.LastIndexOf('\\') + 1);
+
+            return str.Remove(str.IndexOf('.'));
+        }
         public static async Task<LinkedList<Image>?> GetImagesAsync(this ImageWorker worker, string directory)
         {
             if (!Directory.Exists(directory))
@@ -137,7 +143,7 @@ namespace WebApplication4
 
                 Parallel.ForEach(files, (file) =>
                 {
-                    var img = new Image(file);
+                    var img = ImageWorker.CreateImage(file);
 
                     img.Tags.AppendLine(worker.GetShortFileName(file));
 
@@ -147,16 +153,6 @@ namespace WebApplication4
             });
 
             return images;
-        }
-    }
-
-    internal static class FileExtension
-    {
-        public static string GetShortFileName(this ImageWorker worker, string path)
-        {
-            string str = path.Substring(path.LastIndexOf('\\') + 1);
-
-            return str.Remove(str.IndexOf('.'));
         }
     }
 
@@ -186,9 +182,9 @@ namespace WebApplication4
 
     internal class ImageWorker
     {
-        public Image? CreateImage(string path)
+        public static Image? CreateImage(string path)
         {
-            if (!Directory.Exists(path))
+            if (!File.Exists(path))
                 return null;
 
             return new Image(path);

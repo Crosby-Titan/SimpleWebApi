@@ -49,6 +49,14 @@ async function Click() {
         htmlContent.appendChild(img);
     }
 
+    if (!htmlContent.hasChildNodes()) {
+        let p = document.createElement("p");
+
+        p.textContent = "Не найдено картинок по вашему запросу."
+
+        htmlContent.appendChild(p);
+    }
+
     document.getElementById("testP").innerText = String(request.status);
 
 }
