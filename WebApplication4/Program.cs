@@ -42,7 +42,7 @@ namespace WebApplication4
                     return;
                 }
 
-                await _worker.SendPictureAsync(context, query?.Query, _pictures);
+                await _worker.SendPictureAsync(context, query?.Query.ToLower(), _pictures);
 
             });
 
