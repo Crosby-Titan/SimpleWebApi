@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -10,7 +11,7 @@ namespace WebApplication4
     {
         private static IDictionary<string, LinkedList<Image>>? _pictures { get; set; }
         private static ImageWorker _worker { get; set; }
-        private static readonly string _defaultImagePath = @"C:\Users\CrosbyTitan\source\repos\WebApplication4\WebApplication4\files\Resources\Images\";
+        private static string _defaultImagePath { get; set; }
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = "files" });
@@ -41,7 +42,7 @@ namespace WebApplication4
                     return;
                 }
 
-                await _worker.SendPictureAsync(context, query?.Query,_pictures);
+                await _worker.SendPictureAsync(context, query?.Query, _pictures);
 
             });
 
@@ -50,7 +51,13 @@ namespace WebApplication4
 
         private static void InitializeComponents()
         {
+            var sb = new StringBuilder(Environment.ProcessPath);
 
+            _defaultImagePath = sb.Replace("bin", "_")
+                .Remove(sb.IndexOf('_'))
+                .Append("files\\Resources\\Images")
+                .ToString();
+                                  
             _pictures = new Dictionary<string, LinkedList<Image>>();
 
             _worker = new ImageWorker();
@@ -130,7 +137,7 @@ namespace WebApplication4
 
                 Parallel.ForEach(files, (file) =>
                 {
-                    var img = worker.CreateImage(file);
+                    var img = new Image(file);
 
                     img.Tags.AppendLine(worker.GetShortFileName(file));
 
@@ -153,6 +160,30 @@ namespace WebApplication4
         }
     }
 
+    internal static class StringBuilderExtension
+    {
+        public static int IndexOf(this StringBuilder sb, char value)
+        {
+            for (int i = 0; i < sb.Length; i++)
+            {
+                if (sb[i] == value)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        public static StringBuilder Remove(this StringBuilder sb, int startIndex)
+        {
+            for(int i = sb.Length - 1; i >= startIndex; i--)
+            {
+                sb.Remove(i,1);
+            }
+
+            return sb;
+        }
+    }
+
     internal class ImageWorker
     {
         public Image? CreateImage(string path)
@@ -165,18 +196,23 @@ namespace WebApplication4
 
         public IEnumerable<LinkedList<Image>?> GetImages(string? query, IDictionary<string, LinkedList<Image>>? pictures)
         {
-            if (pictures == null)
+            if (pictures == null || query == null)
                 yield break;
 
             foreach (var picture in pictures)
             {
-                if (picture.Key.Trim() == query?.ToLower())
+                if (this.Contains(picture.Key, query))
                 {
                     yield return picture.Value;
                 }
             }
 
             yield break;
+        }
+
+        private bool Contains(string key, string query)
+        {
+            return key.Contains(new StringBuilder(query).Replace(' ', '_').ToString());
         }
 
         public async Task SendPictureAsync(HttpContext context, string? query, IDictionary<string, LinkedList<Image>>? pictures)
